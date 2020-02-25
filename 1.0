@@ -1,0 +1,37 @@
+game_goalie_stats <- read.csv("~/Capstone/game_goalie_stats.csv")
+data <- game_goalie_stats
+str(data)
+summary(data)
+
+#Remove NA
+cleanData <- na.omit(data)
+
+str(cleanData)
+levels(cleanData$decision)
+
+#Remove non-relevant columns
+
+RelevantData <- subset(cleanData, select = -c(goals, assists, pim, powerPlaySavePercentage, evenStrengthSavePercentage))
+View(RelevantData)
+
+#Convert factor to numeric
+#"W" = 3, "L" = 2, "" = 1
+RelevantData$decision <- as.numeric(RelevantData$decision)
+
+#Correlation
+cor(RelevantData)
+corMatrix <- cor(RelevantData)
+
+#Correlation Visualization
+library(reshape2)
+melted_cormat <- melt(corMatrix)
+library(ggplot2)
+ggplot(data = melted_cormat, aes(Var2, Var1, fill = value))+
+  geom_tile(color = "white")+
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  theme_minimal()+ 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   size = 12, hjust = 1))+
+  coord_fixed() 
