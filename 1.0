@@ -1,3 +1,8 @@
+library(dplyr)
+library(reshape2)
+library(reshape2)
+
+
 game_goalie_stats <- read.csv("~/Capstone/game_goalie_stats.csv")
 data <- game_goalie_stats
 str(data)
@@ -12,7 +17,6 @@ levels(cleanData$decision)
 #Remove non-relevant columns
 
 RelevantData <- subset(cleanData, select = -c(goals, assists, pim, powerPlaySavePercentage, evenStrengthSavePercentage))
-View(RelevantData)
 
 #Convert factor to numeric
 #"W" = 3, "L" = 2, "" = 1
@@ -23,9 +27,9 @@ cor(RelevantData)
 corMatrix <- cor(RelevantData)
 
 #Correlation Visualization
-library(reshape2)
+
 melted_cormat <- melt(corMatrix)
-library(ggplot2)
+
 ggplot(data = melted_cormat, aes(Var2, Var1, fill = value))+
   geom_tile(color = "white")+
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
@@ -35,3 +39,156 @@ ggplot(data = melted_cormat, aes(Var2, Var1, fill = value))+
   theme(axis.text.x = element_text(angle = 45, vjust = 1, 
                                    size = 12, hjust = 1))+
   coord_fixed() 
+
+#import game info table
+game <- read.csv("~/Capstone/game.csv")
+cleanGame <- na.omit(game)
+
+#reduce table to necessary variables
+keygame <- c("game_id","season","date_time")
+relevantGame <- cleanGame[keygame]
+
+
+#import player info table
+player_info <- read.csv("~/Capstone/player_info.csv")
+cleanPlayerInfo <- na.omit(player_info)
+
+#reduce table to necessary variables
+keyPlayerInfo <- c("player_id","firstName", "lastName")
+relevantPlayerInfo <- cleanPlayerInfo[keyPlayerInfo]
+
+#join tables to create one table with all necessary info
+table1 <- merge(x=RelevantData, y = relevantGame, by="game_id")
+table2 <- merge(x=table1, y=relevantPlayerInfo, by="player_id")
+
+#rearrange columns
+table3 <- subset(table2, select = c(player_id, game_id, shots, saves, decision, savePercentage, season, date_time, firstName, lastName))
+
+finalTable <- table3[,c(1,7,9,10,3,4,6,5,2,8)]
+
+#split table by season, creates a list
+seasons <- split(finalTable, finalTable$season)
+
+#sort by date
+sorted2011 <- seasons$`20102011`[order(seasons$`20102011`$game_id),]
+#sorted by goalie
+sortedSeason1 <- sorted2011[order(sorted2011$player_id),]
+#^this table now has all goalies sorted by player id and date
+#we can now look at the amount of rest each goalie has for each game
+#first we will do this procedure for the remaining seasons
+
+sorted2012 <-seasons$`20112012`[order(seasons$`20112012`$game_id),]
+sortedSeason2 <- sorted2012[order(sorted2012$player_id),]
+
+sorted2013 <-seasons$`20122013`[order(seasons$`20122013`$game_id),]
+sortedSeason3 <- sorted2013[order(sorted2013$player_id),]
+
+sorted2014 <-seasons$`20132014`[order(seasons$`20132014`$game_id),]
+sortedSeason4 <- sorted2014[order(sorted2014$player_id),]
+
+sorted2015 <-seasons$`20142015`[order(seasons$`20142015`$game_id),]
+sortedSeason5 <- sorted2015[order(sorted2015$player_id),]
+
+sorted2016 <-seasons$`20152016`[order(seasons$`20152016`$game_id),]
+sortedSeason6 <- sorted2016[order(sorted2016$player_id),]
+
+sorted2017 <-seasons$`20162017`[order(seasons$`20162017`$game_id),]
+sortedSeason7 <- sorted2017[order(sorted2017$player_id),]
+
+sorted2018 <-seasons$`20172018`[order(seasons$`20172018`$game_id),]
+sortedSeason8 <- sorted2018[order(sorted2018$player_id),]
+
+sorted2019 <-seasons$`20182019`[order(seasons$`20182019`$game_id),]
+sortedSeason9 <- sorted2019[order(sorted2019$player_id),]
+
+#determine number of days of rest for each goalie
+#creates new column 'Rest' and finds difference between dates for each goalie
+sortedSeason1$Rest <- ave(as.numeric(sortedSeason1$date_time), sortedSeason1$player_id, FUN = function(x)c(0, abs(diff(x))-1))
+sortedSeason2$Rest <- ave(as.numeric(sortedSeason2$date_time), sortedSeason2$player_id, FUN = function(x)c(0, abs(diff(x))-1))
+sortedSeason3$Rest <- ave(as.numeric(sortedSeason3$date_time), sortedSeason3$player_id, FUN = function(x)c(0, abs(diff(x))-1))
+sortedSeason4$Rest <- ave(as.numeric(sortedSeason4$date_time), sortedSeason4$player_id, FUN = function(x)c(0, abs(diff(x))-1))
+sortedSeason5$Rest <- ave(as.numeric(sortedSeason5$date_time), sortedSeason5$player_id, FUN = function(x)c(0, abs(diff(x))-1))
+sortedSeason6$Rest <- ave(as.numeric(sortedSeason6$date_time), sortedSeason6$player_id, FUN = function(x)c(0, abs(diff(x))-1))
+sortedSeason7$Rest <- ave(as.numeric(sortedSeason7$date_time), sortedSeason7$player_id, FUN = function(x)c(0, abs(diff(x))-1))
+sortedSeason8$Rest <- ave(as.numeric(sortedSeason8$date_time), sortedSeason8$player_id, FUN = function(x)c(0, abs(diff(x))-1))
+sortedSeason9$Rest <- ave(as.numeric(sortedSeason9$date_time), sortedSeason9$player_id, FUN = function(x)c(0, abs(diff(x))-1))
+
+#Determine performance of goalie relative to a league average goalie
+
+sortedSeason1$RelativePerformance <- (sortedSeason1$savePercentage - mean(sortedSeason1$savePercentage))
+sortedSeason2$RelativePerformance <- (sortedSeason2$savePercentage - mean(sortedSeason2$savePercentage))
+sortedSeason3$RelativePerformance <- (sortedSeason3$savePercentage - mean(sortedSeason3$savePercentage))
+sortedSeason4$RelativePerformance <- (sortedSeason4$savePercentage - mean(sortedSeason4$savePercentage))
+sortedSeason5$RelativePerformance <- (sortedSeason5$savePercentage - mean(sortedSeason5$savePercentage))
+sortedSeason6$RelativePerformance <- (sortedSeason6$savePercentage - mean(sortedSeason6$savePercentage))
+sortedSeason7$RelativePerformance <- (sortedSeason7$savePercentage - mean(sortedSeason7$savePercentage))
+sortedSeason8$RelativePerformance <- (sortedSeason8$savePercentage - mean(sortedSeason8$savePercentage))
+sortedSeason9$RelativePerformance <- (sortedSeason9$savePercentage - mean(sortedSeason9$savePercentage))
+
+#Sort each season by 0 days // 1 days of rest // 2+ days of rest
+UpdatedTable1 <- sortedSeason1 %>%
+   mutate(DaysRest=case_when(Rest > 1 ~ '2+', Rest > 0 ~ '1', TRUE ~ '0'))
+
+UpdatedTable2 <- sortedSeason2 %>%
+   mutate(DaysRest=case_when(Rest > 1 ~ '2+', Rest > 0 ~ '1', TRUE ~ '0'))
+
+UpdatedTable3 <- sortedSeason3 %>%
+   mutate(DaysRest=case_when(Rest > 1 ~ '2+', Rest > 0 ~ '1', TRUE ~ '0'))
+
+UpdatedTable4 <- sortedSeason4 %>%
+   mutate(DaysRest=case_when(Rest > 1 ~ '2+', Rest > 0 ~ '1', TRUE ~ '0'))
+
+UpdatedTable5 <- sortedSeason5 %>%
+  mutate(DaysRest=case_when(Rest > 1 ~ '2+', Rest > 0 ~ '1', TRUE ~ '0'))
+
+UpdatedTable6 <- sortedSeason6 %>%
+  mutate(DaysRest=case_when(Rest > 1 ~ '2+', Rest > 0 ~ '1', TRUE ~ '0'))
+
+UpdatedTable7 <- sortedSeason7 %>%
+  mutate(DaysRest=case_when(Rest > 1 ~ '2+', Rest > 0 ~ '1', TRUE ~ '0'))
+
+UpdatedTable8 <- sortedSeason8 %>%
+  mutate(DaysRest=case_when(Rest > 1 ~ '2+', Rest > 0 ~ '1', TRUE ~ '0'))
+
+UpdatedTable9 <- sortedSeason9 %>%
+  mutate(DaysRest=case_when(Rest > 1 ~ '2+', Rest > 0 ~ '1', TRUE ~ '0'))
+
+#days rest vs performance
+Performance2011 <- aggregate(UpdatedTable1$RelativePerformance ~ UpdatedTable1$DaysRest,data = UpdatedTable1 ,mean)
+Performance2012 <- aggregate(UpdatedTable2$RelativePerformance ~ UpdatedTable2$DaysRest,data = UpdatedTable2 ,mean)
+Performance2013 <- aggregate(UpdatedTable3$RelativePerformance ~ UpdatedTable3$DaysRest,data = UpdatedTable3 ,mean)
+Performance2014 <- aggregate(UpdatedTable4$RelativePerformance ~ UpdatedTable4$DaysRest,data = UpdatedTable4 ,mean)
+Performance2015 <- aggregate(UpdatedTable5$RelativePerformance ~ UpdatedTable5$DaysRest,data = UpdatedTable5 ,mean)
+Performance2016 <- aggregate(UpdatedTable6$RelativePerformance ~ UpdatedTable6$DaysRest,data = UpdatedTable6 ,mean)
+Performance2017 <- aggregate(UpdatedTable7$RelativePerformance ~ UpdatedTable7$DaysRest,data = UpdatedTable7 ,mean)
+Performance2018 <- aggregate(UpdatedTable8$RelativePerformance ~ UpdatedTable8$DaysRest,data = UpdatedTable8 ,mean)
+Performance2019 <- aggregate(UpdatedTable9$RelativePerformance ~ UpdatedTable9$DaysRest,data = UpdatedTable9 ,mean)
+
+#Data visualization
+Plot2011 <- ggplot(Performance2011, aes(Performance2011$`UpdatedTable1$DaysRest`, Performance2011$`UpdatedTable1$RelativePerformance`)) + geom_bar(stat = "identity", fill = "blue") + xlab("Number of Day of Rest") + ylab("Relative Performance (sv%)") + ggtitle("Effect of Rest 2010/11 NHL Season")
+Plot2012 <- ggplot(Performance2012, aes(Performance2012$`UpdatedTable2$DaysRest`, Performance2012$`UpdatedTable2$RelativePerformance`)) + geom_bar(stat = "identity", fill = "blue") + xlab("Number of Day of Rest") + ylab("Relative Performance (sv%)") + ggtitle("Effect of Rest 2011/12 NHL Season")
+Plot2013 <- ggplot(Performance2013, aes(Performance2013$`UpdatedTable3$DaysRest`, Performance2013$`UpdatedTable3$RelativePerformance`)) + geom_bar(stat = "identity", fill = "blue") + xlab("Number of Day of Rest") + ylab("Relative Performance (sv%)") + ggtitle("Effect of Rest 2012/13 NHL Season")
+Plot2014 <- ggplot(Performance2014, aes(Performance2014$`UpdatedTable4$DaysRest`, Performance2014$`UpdatedTable4$RelativePerformance`)) + geom_bar(stat = "identity", fill = "blue") + xlab("Number of Day of Rest") + ylab("Relative Performance (sv%)") + ggtitle("Effect of Rest 2013/14 NHL Season")
+Plot2015 <- ggplot(Performance2015, aes(Performance2015$`UpdatedTable5$DaysRest`, Performance2015$`UpdatedTable5$RelativePerformance`)) + geom_bar(stat = "identity", fill = "blue") + xlab("Number of Day of Rest") + ylab("Relative Performance (sv%)") + ggtitle("Effect of Rest 2014/15 NHL Season")
+Plot2016 <- ggplot(Performance2016, aes(Performance2016$`UpdatedTable6$DaysRest`, Performance2016$`UpdatedTable6$RelativePerformance`)) + geom_bar(stat = "identity", fill = "blue") + xlab("Number of Day of Rest") + ylab("Relative Performance (sv%)") + ggtitle("Effect of Rest 2015/16 NHL Season")
+Plot2017 <- ggplot(Performance2017, aes(Performance2017$`UpdatedTable7$DaysRest`, Performance2017$`UpdatedTable7$RelativePerformance`)) + geom_bar(stat = "identity", fill = "blue") + xlab("Number of Day of Rest") + ylab("Relative Performance (sv%)") + ggtitle("Effect of Rest 2016/17 NHL Season")
+Plot2018 <- ggplot(Performance2018, aes(Performance2018$`UpdatedTable8$DaysRest`, Performance2018$`UpdatedTable8$RelativePerformance`)) + geom_bar(stat = "identity", fill = "blue") + xlab("Number of Day of Rest") + ylab("Relative Performance (sv%)") + ggtitle("Effect of Rest 2017/18 NHL Season")
+Plot2019 <- ggplot(Performance2019, aes(Performance2019$`UpdatedTable9$DaysRest`, Performance2019$`UpdatedTable9$RelativePerformance`)) + geom_bar(stat = "identity", fill = "blue") + xlab("Number of Day of Rest") + ylab("Relative Performance (sv%)") + ggtitle("Effect of Rest 2018/19 NHL Season")
+
+#I also wanted to do an analysis of all the years combined
+
+sortedTotal <- finalTable[order(finalTable$game_id),]
+sortedTotal2 <- sortedTotal[order(sortedTotal$player_id),]
+sortedTotal2$Rest <- ave(as.numeric(sortedTotal2$date_time), sortedTotal2$player_id, FUN = function(x)c(0, abs(diff(x))-1))
+sortedTotal2$RelativePerformance <- (sortedTotal2$savePercentage - mean(sortedTotal2$savePercentage))
+UpdatedTable1.0 <- sortedTotal2 %>%
+  mutate(DaysRest=case_when(Rest > 1 ~ '2+', Rest > 0 ~ '1', TRUE ~ '0'))
+PerformanceTotal <- aggregate(UpdatedTable1.0$RelativePerformance ~ UpdatedTable1.0$DaysRest,data = UpdatedTable1.0 ,mean)
+PlotTotal <- ggplot(PerformanceTotal, aes(PerformanceTotal$`UpdatedTable1.0$DaysRest`, PerformanceTotal$`UpdatedTable1.0$RelativePerformance`)) + geom_bar(stat = "identity", fill = "blue") + xlab("Number of Day of Rest") + ylab("Relative Performance (sv%)") + ggtitle("Effect of Rest (NHL 2010-2019)")
+
+#I also created an analysis with 0,1,2, and 2+ days rest
+UpdatedTable2.0 <- sortedTotal2 %>%
+      mutate(DaysRest=case_when(Rest >2 ~ '2+', Rest > 1 ~ '2', Rest > 0 ~ '1', TRUE ~ '0'))
+performanceTotal2.0 <- aggregate(UpdatedTable2.0$RelativePerformance ~ UpdatedTable2.0$DaysRest,data = UpdatedTable2.0 ,mean)
+PlotTotal2.0 <- ggplot(performanceTotal2.0, aes(performanceTotal2.0$`UpdatedTable2.0$DaysRest`, performanceTotal2.0$`UpdatedTable2.0$RelativePerformance`)) + geom_bar(stat = "identity", fill = "blue") + xlab("Number of Day of Rest") + ylab("Relative Performance (sv%)") + ggtitle("Effect of Rest on (NHL 2010-2019)")
+
