@@ -1,6 +1,6 @@
 library(dplyr)
 library(reshape2)
-library(reshape2)
+
 
 
 game_goalie_stats <- read.csv("~/Capstone/game_goalie_stats.csv")
@@ -192,3 +192,263 @@ UpdatedTable2.0 <- sortedTotal2 %>%
 performanceTotal2.0 <- aggregate(UpdatedTable2.0$RelativePerformance ~ UpdatedTable2.0$DaysRest,data = UpdatedTable2.0 ,mean)
 PlotTotal2.0 <- ggplot(performanceTotal2.0, aes(performanceTotal2.0$`UpdatedTable2.0$DaysRest`, performanceTotal2.0$`UpdatedTable2.0$RelativePerformance`)) + geom_bar(stat = "identity", fill = "blue") + xlab("Number of Day of Rest") + ylab("Relative Performance (sv%)") + ggtitle("Effect of Rest on (NHL 2010-2019)")
 
+##### problem #2 Ideal number of games to play consecutively 
+
+table4 <- subset(table2, select = c(player_id, game_id,team_id, shots, saves, decision, savePercentage, season, date_time, firstName, lastName))
+finalTable2.0 <- table4[,c(1,3,7,9,10,11,4,6,5,2,8)]
+
+#sort by team and date
+sortedTable2 <- finalTable2.0[order(finalTable2.0$date_time),]
+sortedFinaltable <- sortedTable2[order(sortedTable2$team_id),]
+
+#split by season
+seasons2.0 <- split(sortedFinaltable, sortedFinaltable$season)
+
+#create new column that detrmines if player played last game 1==played last game // 0 == did not play last game
+
+Consec201011 <- seasons2.0$`20102011` %>%
+  mutate(PlayedLastGame = ifelse(lag(seasons2.0$`20102011`$player_id) == seasons2.0$`20102011`$player_id, "1","0" ))
+Consec201011$RelativePerformance <- (sortedSeason1$savePercentage - mean(sortedSeason1$savePercentage))
+
+Consec201112 <- seasons2.0$`20112012` %>%
+  mutate(PlayedLastGame = ifelse(lag(seasons2.0$`20112012`$player_id) == seasons2.0$`20112012`$player_id, "1","0" ))
+Consec201112$RelativePerformance <- (sortedSeason2$savePercentage - mean(sortedSeason2$savePercentage))
+
+Consec201213 <- seasons2.0$`20122013` %>%
+  mutate(PlayedLastGame = ifelse(lag(seasons2.0$`20122013`$player_id) == seasons2.0$`20122013`$player_id, "1","0" ))
+Consec201213$RelativePerformance <- (sortedSeason3$savePercentage - mean(sortedSeason3$savePercentage))
+
+Consec201314 <- seasons2.0$`20132014` %>%
+  mutate(PlayedLastGame = ifelse(lag(seasons2.0$`20132014`$player_id) == seasons2.0$`20132014`$player_id, "1","0" ))
+Consec201314$RelativePerformance <- (sortedSeason4$savePercentage - mean(sortedSeason4$savePercentage))
+
+Consec201415 <- seasons2.0$`20142015` %>%
+  mutate(PlayedLastGame = ifelse(lag(seasons2.0$`20142015`$player_id) == seasons2.0$`20142015`$player_id, "1","0" ))
+Consec201415$RelativePerformance <- (sortedSeason5$savePercentage - mean(sortedSeason5$savePercentage))
+
+Consec201516 <- seasons2.0$`20152016` %>%
+  mutate(PlayedLastGame = ifelse(lag(seasons2.0$`20152016`$player_id) == seasons2.0$`20152016`$player_id, "1","0" ))
+Consec201516$RelativePerformance <- (sortedSeason6$savePercentage - mean(sortedSeason6$savePercentage))
+
+Consec201617 <- seasons2.0$`20162017` %>%
+  mutate(PlayedLastGame = ifelse(lag(seasons2.0$`20162017`$player_id) == seasons2.0$`20162017`$player_id, "1","0" ))
+Consec201617$RelativePerformance <- (sortedSeason7$savePercentage - mean(sortedSeason7$savePercentage))
+
+Consec201718 <- seasons2.0$`20172018` %>%
+  mutate(PlayedLastGame = ifelse(lag(seasons2.0$`20172018`$player_id) == seasons2.0$`20172018`$player_id, "1","0" ))
+Consec201718$RelativePerformance <- (sortedSeason8$savePercentage - mean(sortedSeason8$savePercentage))
+
+Consec201819 <- seasons2.0$`20182019` %>%
+  mutate(PlayedLastGame = ifelse(lag(seasons2.0$`20182019`$player_id) == seasons2.0$`20182019`$player_id, "1","0" ))
+Consec201819$RelativePerformance <- (sortedSeason9$savePercentage - mean(sortedSeason9$savePercentage))
+
+#split apply combine
+
+##split based on consecutive games by goalie
+split201011 <- split(Consec201011, data.table::rleid(Consec201011$PlayedLastGame))
+
+##apply functions to calc average save percentage over consecutive games and the number of consectuvtive games
+avgConsec201011 <- sapply(split201011, function(x) colMeans(x[c("savePercentage")]))
+relConsec201011 <- sapply(split201011, function(x) colMeans(x[c("RelativePerformance")]))
+consecGames201011 <- sapply(split201011, function(x) nrow(x))
+
+avgConsec201011 <- as.data.frame(avgConsec201011)
+consecGames201011 <- as.data.frame(consecGames201011)
+relConsec201011 <- as.data.frame(relConsec201011)
+
+##combine into one dataframe to analyse
+combined201011 <- data.frame(consecGames201011$consecGames201011, avgConsec201011$avgConsec201011, relConsec201011$relConsec201011)
+names(combined201011)[1] <- "Consecutive Games Played"
+names(combined201011)[2] <- "Average Save Percentage"
+names(combined201011)[3] <- "Average Relative Performance"
+
+##Repeat for other years - 2011-12
+split201112 <- split(Consec201112, data.table::rleid(Consec201112$PlayedLastGame))
+
+avgConsec201112 <- sapply(split201112, function(x) colMeans(x[c("savePercentage")]))
+consecGames201112 <- sapply(split201112, function(x) nrow(x))
+relConsec201112 <- sapply(split201112, function(x) colMeans(x[c("RelativePerformance")]))
+
+avgConsec201112 <- as.data.frame(avgConsec201112)
+consecGames201112 <- as.data.frame(consecGames201112)
+relConsec201112 <- as.data.frame(relConsec201112)
+
+combined201112 <- data.frame(consecGames201112$consecGames201112, avgConsec201112$avgConsec201112, relConsec201112$relConsec201112)
+names(combined201112)[1] <- "Consecutive Games Played"
+names(combined201112)[2] <- "Average Save Percentage"
+names(combined201112)[3] <- "Average Relative Performance"
+
+##2012-13
+split201213 <- split(Consec201213, data.table::rleid(Consec201213$PlayedLastGame))
+
+avgConsec201213 <- sapply(split201213, function(x) colMeans(x[c("savePercentage")]))
+consecGames201213 <- sapply(split201213, function(x) nrow(x))
+relConsec201213 <- sapply(split201213, function(x) colMeans(x[c("RelativePerformance")]))
+
+avgConsec201213 <- as.data.frame(avgConsec201213)
+consecGames201213 <- as.data.frame(consecGames201213)
+relConsec201213 <- as.data.frame(relConsec201213)
+
+combined201213 <- data.frame(consecGames201213$consecGames201213, avgConsec201213$avgConsec201213, relConsec201213$relConsec201213)
+names(combined201213)[1] <- "Consecutive Games Played"
+names(combined201213)[2] <- "Average Save Percentage"
+names(combined201213)[3] <- "Average Relative Performance"
+
+##2013-14
+split201314 <- split(Consec201314, data.table::rleid(Consec201314$PlayedLastGame))
+
+avgConsec201314 <- sapply(split201314, function(x) colMeans(x[c("savePercentage")]))
+consecGames201314 <- sapply(split201314, function(x) nrow(x))
+relConsec201314 <- sapply(split201314, function(x) colMeans(x[c("RelativePerformance")]))
+
+avgConsec201314 <- as.data.frame(avgConsec201314)
+consecGames201314 <- as.data.frame(consecGames201314)
+relConsec201314 <- as.data.frame(relConsec201314)
+
+combined201314 <- data.frame(consecGames201314$consecGames201314, avgConsec201314$avgConsec201314, relConsec201314$relConsec201314)
+names(combined201314)[1] <- "Consecutive Games Played"
+names(combined201314)[2] <- "Average Save Percentage"
+names(combined201314)[3] <- "Average Relative Performance"
+
+##2014-15
+split201415 <- split(Consec201415, data.table::rleid(Consec201415$PlayedLastGame))
+
+avgConsec201415 <- sapply(split201415, function(x) colMeans(x[c("savePercentage")]))
+consecGames201415 <- sapply(split201415, function(x) nrow(x))
+relConsec201415 <- sapply(split201415, function(x)colMeans(x[c("RelativePerformance")]))
+
+avgConsec201415 <- as.data.frame(avgConsec201415)
+consecGames201415 <- as.data.frame(consecGames201415)
+relConsec201415 <- as.data.frame(relConsec201415)
+
+combined201415 <- data.frame(consecGames201415$consecGames201415, avgConsec201415$avgConsec201415, relConsec201415$relConsec201415)
+names(combined201415)[1] <- "Consecutive Games Played"
+names(combined201415)[2] <- "Average Save Percentage"
+names(combined201415)[3] <- "Average Relative Performance"
+
+##2015-16
+split201516 <- split(Consec201516, data.table::rleid(Consec201516$PlayedLastGame))
+
+avgConsec201516 <- sapply(split201516, function(x) colMeans(x[c("savePercentage")]))
+consecGames201516 <- sapply(split201516, function(x) nrow(x))
+relConsec201516<- sapply(split201516, function(x) colMeans(x[c("RelativePerformance")]))
+
+avgConsec201516 <- as.data.frame(avgConsec201516)
+consecGames201516 <- as.data.frame(consecGames201516)
+relConsec201516 <- as.data.frame(relConsec201516)
+
+combined201516 <- data.frame(consecGames201516$consecGames201516, avgConsec201516$avgConsec201516, relConsec201516$relConsec201516)
+names(combined201516)[1] <- "Consecutive Games Played"
+names(combined201516)[2] <- "Average Save Percentage"
+names(combined201516)[3] <- "Average Relative Performance"
+
+##2016-17
+split201617 <- split(Consec201617, data.table::rleid(Consec201617$PlayedLastGame))
+
+avgConsec201617 <- sapply(split201617, function(x) colMeans(x[c("savePercentage")]))
+consecGames201617 <- sapply(split201617, function(x) nrow(x))
+relConsec201617 <- sapply(split201617, function(x) colMeans(x[c("RelativePerformance")]))
+
+avgConsec201617 <- as.data.frame(avgConsec201617)
+consecGames201617 <- as.data.frame(consecGames201617)
+relConsec201617 <- as.data.frame(relConsec201617)
+
+combined201617 <- data.frame(consecGames201617$consecGames201617, avgConsec201617$avgConsec201617, relConsec201617$relConsec201617)
+names(combined201617)[1] <- "Consecutive Games Played"
+names(combined201617)[2] <- "Average Save Percentage"
+names(combined201617)[3] <- "Average Relative Performance"
+
+##2017-18
+split201718 <- split(Consec201718, data.table::rleid(Consec201718$PlayedLastGame))
+
+avgConsec201718 <- sapply(split201718, function(x) colMeans(x[c("savePercentage")]))
+consecGames201718 <- sapply(split201718, function(x) nrow(x))
+relConsec201718 <- sapply(split201718, function(x) colMeans(x[c("RelativePerformance")]))
+
+avgConsec201718 <- as.data.frame(avgConsec201718)
+consecGames201718 <- as.data.frame(consecGames201718)
+relConsec201718 <- as.data.frame(relConsec201718)
+
+combined201718 <- data.frame(consecGames201718$consecGames201718, avgConsec201718$avgConsec201718, relConsec201718$relConsec201718)
+names(combined201718)[1] <- "Consecutive Games Played"
+names(combined201718)[2] <- "Average Save Percentage"
+names(combined201718)[3] <- "Average Relative Performance"
+
+##2018-19
+split201819 <- split(Consec201819, data.table::rleid(Consec201819$PlayedLastGame))
+
+avgConsec201819 <- sapply(split201819, function(x) colMeans(x[c("savePercentage")]))
+consecGames201819 <- sapply(split201819, function(x) nrow(x))
+relConsec201819 <- sapply(split201819, function(x) colMeans(x[c("RelativePerformance")]))
+
+avgConsec201819 <- as.data.frame(avgConsec201819)
+consecGames201819 <- as.data.frame(consecGames201819)
+relConsec201819 <- as.data.frame(relConsec201819)
+
+combined201819 <- data.frame(consecGames201819$consecGames201819, avgConsec201819$avgConsec201819, relConsec201819$relConsec201819)
+names(combined201819)[1] <- "Consecutive Games Played"
+names(combined201819)[2] <- "Average Save Percentage"
+names(combined201819)[3] <- "Average Relative Performance"
+
+##now split by games played
+
+consecSplit201011 <- split(combined201011, combined201011$`Consecutive Games Played`)
+df201011<-sapply(consecSplit201011, function(x) colMeans(x[c("Average Relative Performance")]))
+write.csv(df201011, "C:\\Users\\brich\\OneDrive\\Documents\\Capstone\\Excel\\df201011.csv")
+
+consecSplit201112 <- split(combined201112, combined201112$`Consecutive Games Played`)
+df201112<-sapply(consecSplit201112, function(x) colMeans(x[c("Average Relative Performance")]))
+write.csv(df201112, "C:\\Users\\brich\\OneDrive\\Documents\\Capstone\\Excel\\df201112.csv")
+
+consecSplit201213 <- split(combined201213, combined201213$`Consecutive Games Played`)
+df201213<-sapply(consecSplit201213, function(x) colMeans(x[c("Average Relative Performance")]))
+write.csv(df201213, "C:\\Users\\brich\\OneDrive\\Documents\\Capstone\\Excel\\df201213.csv")
+
+consecSplit201314 <- split(combined201314, combined201314$`Consecutive Games Played`)
+df201314<-sapply(consecSplit201314, function(x) colMeans(x[c("Average Relative Performance")]))
+write.csv(df201314, "C:\\Users\\brich\\OneDrive\\Documents\\Capstone\\Excel\\df201314.csv")
+
+consecSplit201415 <- split(combined201415, combined201415$`Consecutive Games Played`)
+df201415<-sapply(consecSplit201415, function(x) colMeans(x[c("Average Relative Performance")]))
+write.csv(df201415, "C:\\Users\\brich\\OneDrive\\Documents\\Capstone\\Excel\\df201415.csv")
+
+consecSplit201516 <- split(combined201516, combined201516$`Consecutive Games Played`)
+df201516<-sapply(consecSplit201516, function(x) colMeans(x[c("Average Relative Performance")]))
+write.csv(df201516, "C:\\Users\\brich\\OneDrive\\Documents\\Capstone\\Excel\\df201516.csv")
+
+consecSplit201617 <- split(combined201617, combined201617$`Consecutive Games Played`)
+df201617<-sapply(consecSplit201617, function(x) colMeans(x[c("Average Relative Performance")]))
+write.csv(df201617, "C:\\Users\\brich\\OneDrive\\Documents\\Capstone\\Excel\\df201617.csv")
+
+consecSplit201718 <- split(combined201718, combined201718$`Consecutive Games Played`)
+df201718<-sapply(consecSplit201718, function(x) colMeans(x[c("Average Relative Performance")]))
+write.csv(df201718, "C:\\Users\\brich\\OneDrive\\Documents\\Capstone\\Excel\\df201718.csv")
+
+consecSplit201819 <- split(combined201819, combined201819$`Consecutive Games Played`)
+df201819<-sapply(consecSplit201819, function(x) colMeans(x[c("Average Relative Performance")]))
+write.csv(df201819, "C:\\Users\\brich\\OneDrive\\Documents\\Capstone\\Excel\\df201819.csv")
+
+##same process for the entire dataset - no split seasons
+ConsecTotal <- sortedFinaltable %>%
+  mutate(PlayedLastGame = ifelse(lag(sortedFinaltable$player_id) == sortedFinaltable$player_id, "1","0" ))
+
+ConsecTotal$RelativePerformance <- (ConsecTotal$savePercentage - mean(ConsecTotal$savePercentage))
+
+splitConsecTotal <- split(ConsecTotal, data.table::rleid(ConsecTotal$PlayedLastGame))
+
+avgTotal <- sapply(splitConsecTotal, function(x) colMeans(x[c("savePercentage")]))
+consecGamesTotal <- sapply(splitConsecTotal, function(x) nrow(x))
+relPerformanceTotal <- sapply(splitConsecTotal, function(x) colMeans(x[c("RelativePerformance")]))
+
+avgTotal <- as.data.frame(avgTotal)
+consecGamesTotal <- as.data.frame(consecGamesTotal)
+relPerformanceTotal <- as.data.frame(relPerformanceTotal)
+
+combinedConsecTotal <- data.frame(consecGamesTotal$consecGamesTotal, avgTotal$avgTotal, relPerformanceTotal$relPerformanceTotal)
+names(combinedConsecTotal)[1] <- "Consecutive Games Played"
+names(combinedConsecTotal)[2] <- "Average Save Percentage"
+names(combinedConsecTotal)[3] <- "Average Relative Performance"
+
+consecSplitTotal2.0 <- split(combinedConsecTotal, combinedConsecTotal$`Consecutive Games Played`)
+dfTotal<-sapply(consecSplitTotal2.0, function(x) colMeans(x[c("Average Relative Performance")]))
+write.csv(dfTotal, "C:\\Users\\brich\\OneDrive\\Documents\\Capstone\\Excel\\dfTotal.csv")
